@@ -62,7 +62,7 @@ func showResults(title string, domains []string) {
 
 func main() {
 	http.HandleFunc("/", handler)
-	http.ListenAndServe(":9094", nil)
+	http.ListenAndServe(":9024", nil)
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
