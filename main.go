@@ -61,15 +61,38 @@ func showResults(title string, domains []string) {
 }
 
 func main() {
+	http.HandleFunc("/", handler)
+	http.ListenAndServe(":9094", nil)
+}
+
+func handler(w http.ResponseWriter, r *http.Request) {
 	pageContent, err := download(URL_CHAR4)
 	if err != nil {
+		fmt.Fprintf(w, "error:%s", err.Error())
 		panic(err)
 	}
 
 	domains := getDomainsFromPage(pageContent, 4)
-	letter_domains := filter(domains, PATTERN_ALL_LETTERS)
-	showResults("All Letters", letter_domains)
 
+	fmt.Fprint(w, "All Letters:\n")
+	letter_domains := filter(domains, PATTERN_ALL_LETTERS)
+	for i := 0; i < len(letter_domains); i++ {
+		fmt.Fprintf(w, "%s\n", letter_domains[i])
+	}
+
+	if len(letter_domains) == 0 {
+		fmt.Fprint(w, "none")
+	}
+
+	fmt.Fprint(w, "------------------\n")
+
+	fmt.Fprint(w, "All Numbers:\n")
 	number_domains := filter(domains, PATTERN_ALL_NUMBERS)
-	showResults("All Numbers", number_domains)
+	for i := 0; i < len(number_domains); i++ {
+		fmt.Fprintf(w, "%s\n", letter_domains[i])
+	}
+
+	if len(number_domains) == 0 {
+		fmt.Fprint(w, "none")
+	}
 }
