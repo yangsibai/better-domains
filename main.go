@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"regexp"
+	"strings"
 )
 
 const URL_CHAR4 string = "http://char4.com/"
@@ -12,6 +13,8 @@ const URL_CHAR5 string = "http://char5.com/"
 const PATTERN_ALL_LETTERS string = "ALL LETTERS"
 const PATTERN_ALL_NUMBERS string = "ALL NUMBERS"
 const PATTERN_ABCD string = "ABCD"
+
+var KEYWORDS []string
 
 func download(url string) (result string, err error) {
 	response, err := http.Get(url)
@@ -70,15 +73,9 @@ func listFromURL(w http.ResponseWriter, domains []string, title string) {
 
 	findAndListDomains(w, domains, "All Numbers", PATTERN_ALL_NUMBERS)
 
-	findAndListDomains(w, domains, "Contain si", "si")
-
-	findAndListDomains(w, domains, "Contain bai", "bai")
-
-	findAndListDomains(w, domains, "Contain bo", "bo")
-
-	findAndListDomains(w, domains, "Contain qq", "qq")
-
-	findAndListDomains(w, domains, "Contain go", "go")
+	for i := 0; i < len(KEYWORDS); i++ {
+		findAndListDomains(w, domains, "Contain "+KEYWORDS[i], KEYWORDS[i])
+	}
 }
 
 func getDomainsFromURL(url string, count int) []string {
@@ -102,4 +99,13 @@ func handler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	http.HandleFunc("/", handler)
 	http.ListenAndServe(":9024", nil)
+}
+
+func init() {
+	bs, err := ioutil.ReadFile("keywords.txt")
+	if err != nil {
+		panic(err)
+	}
+	content := string(bs)
+	KEYWORDS = strings.Split(content, "\n")
 }
