@@ -4,3 +4,6 @@ bai
 qq
 go
 run
+sibo
+sibai
+yang
