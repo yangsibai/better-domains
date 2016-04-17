@@ -106,6 +106,6 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	content := string(bs)
+	content := strings.Trim(string(bs), "\n")
 	KEYWORDS = strings.Split(content, "\n")
 }
