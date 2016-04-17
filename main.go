@@ -8,6 +8,10 @@ import (
 )
 
 const URL_CHAR4 string = "http://char4.com/"
+const URL_CHAR5 string = "http://char5.com/"
+const PATTERN_ALL_LETTERS string = "ALL LETTERS"
+const PATTERN_ALL_NUMBERS string = "ALL NUMBERS"
+const PATTERN_ABCD string = "ABCD"
 
 func download(url string) (result string, err error) {
 	response, err := http.Get(url)
@@ -29,10 +33,6 @@ func getDomainsFromPage(content string, letterCount int) []string {
 	return r.FindAllString(content, -1)
 }
 
-const PATTERN_ALL_LETTERS string = "ALL LETTERS"
-const PATTERN_ALL_NUMBERS string = "ALL NUMBERS"
-const PATTERN_ABCD string = "ABCD"
-
 func filter(domains []string, pattern string) (results []string) {
 	var r *regexp.Regexp
 	switch pattern {
@@ -40,6 +40,8 @@ func filter(domains []string, pattern string) (results []string) {
 		r = regexp.MustCompile("www\\.[a-z]{4,}\\.com")
 	case PATTERN_ALL_NUMBERS:
 		r = regexp.MustCompile("www\\.\\d{4,}\\.com")
+	default:
+		r = regexp.MustCompile(pattern)
 	}
 	for i := 0; i < len(domains); i++ {
 		if r.MatchString(domains[i]) {
@@ -49,50 +51,55 @@ func filter(domains []string, pattern string) (results []string) {
 	return
 }
 
-func showResults(title string, domains []string) {
-	fmt.Println(title + ":")
-	for i := 0; i < len(domains); i++ {
-		fmt.Println(domains[i])
+func findAndListDomains(w http.ResponseWriter, domains []string, title string, pattern string) {
+	fmt.Fprintf(w, "%s:\n", title)
+	sub_domains := filter(domains, pattern)
+	for i := 0; i < len(sub_domains); i++ {
+		fmt.Fprintf(w, "%s\n", sub_domains[i])
 	}
-	if len(domains) == 0 {
-		fmt.Println("none")
+	if len(sub_domains) == 0 {
+		fmt.Fprint(w, "none\n")
 	}
-	fmt.Println("")
+	fmt.Fprint(w, "\n")
+}
+
+func listFromURL(w http.ResponseWriter, domains []string, title string) {
+	fmt.Fprintf(w, "%s\n\n", title)
+
+	findAndListDomains(w, domains, "All Letters", PATTERN_ALL_LETTERS)
+
+	findAndListDomains(w, domains, "All Numbers", PATTERN_ALL_NUMBERS)
+
+	findAndListDomains(w, domains, "Contain si", "si")
+
+	findAndListDomains(w, domains, "Contain bai", "bai")
+
+	findAndListDomains(w, domains, "Contain bo", "bo")
+
+	findAndListDomains(w, domains, "Contain qq", "qq")
+
+	findAndListDomains(w, domains, "Contain go", "go")
+}
+
+func getDomainsFromURL(url string, count int) []string {
+	pageContent, err := download(url)
+	if err != nil {
+		panic(err)
+	}
+
+	domains := getDomainsFromPage(pageContent, count)
+	return domains
+}
+
+func handler(w http.ResponseWriter, r *http.Request) {
+	char4_domains := getDomainsFromURL(URL_CHAR4, 4)
+	listFromURL(w, char4_domains, "4 Characters")
+
+	char5_domains := getDomainsFromURL(URL_CHAR5, 5)
+	listFromURL(w, char5_domains, "5 Characters")
 }
 
 func main() {
 	http.HandleFunc("/", handler)
 	http.ListenAndServe(":9024", nil)
-}
-
-func handler(w http.ResponseWriter, r *http.Request) {
-	pageContent, err := download(URL_CHAR4)
-	if err != nil {
-		fmt.Fprintf(w, "error:%s", err.Error())
-		panic(err)
-	}
-
-	domains := getDomainsFromPage(pageContent, 4)
-
-	fmt.Fprint(w, "All Letters:\n")
-	letter_domains := filter(domains, PATTERN_ALL_LETTERS)
-	for i := 0; i < len(letter_domains); i++ {
-		fmt.Fprintf(w, "%s\n", letter_domains[i])
-	}
-
-	if len(letter_domains) == 0 {
-		fmt.Fprint(w, "none")
-	}
-
-	fmt.Fprint(w, "------------------\n")
-
-	fmt.Fprint(w, "All Numbers:\n")
-	number_domains := filter(domains, PATTERN_ALL_NUMBERS)
-	for i := 0; i < len(number_domains); i++ {
-		fmt.Fprintf(w, "%s\n", letter_domains[i])
-	}
-
-	if len(number_domains) == 0 {
-		fmt.Fprint(w, "none")
-	}
 }
