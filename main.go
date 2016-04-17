@@ -55,13 +55,13 @@ func filter(domains []string, pattern string) (results []string) {
 }
 
 func findAndListDomains(w http.ResponseWriter, domains []string, title string, pattern string) {
-	fmt.Fprintf(w, "%s:\n", title)
 	sub_domains := filter(domains, pattern)
+	if len(sub_domains) == 0 {
+		return
+	}
+	fmt.Fprintf(w, "%s:\n", title)
 	for i := 0; i < len(sub_domains); i++ {
 		fmt.Fprintf(w, "%s\n", sub_domains[i])
-	}
-	if len(sub_domains) == 0 {
-		fmt.Fprint(w, "none\n")
 	}
 	fmt.Fprint(w, "\n")
 }
