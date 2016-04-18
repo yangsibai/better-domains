@@ -1,0 +1,87 @@
+<div class="add_post">
+    <div class="form">
+        <div>
+            <textarea id="content" required autofocus></textarea>
+        </div>
+        <div class="resources">
+            <div class="resource">
+                <input id="resource" name="resource" type="file" accept="image/*,video/*,audio/*"/>
+            </div>
+            <!--
+            <div class="resource">
+                <input type="file" accept="image/*,video/*,audio/*"/>
+            </div>
+            <div class="resource">
+                <input type="file" accept="image/*,video/*,audio/*"/>
+            </div>
+            -->
+        </div>
+        <div class="btns">
+            <button class="submit" id="submit">Submit</button>
+        </div>
+    </div>
+</div>
+
+{{ define "scripts-add_post" }}
+<script>
+    var submitBtn = document.getElementById('submit');
+    var contentInput = document.getElementById('content');
+    var content;
+    var onSubmit = function () {
+        content = contentInput.value.trim();
+        if (!content) {
+            alert('must have content and cannot be blank');
+            return;
+        }
+        submitBtn.disabled = true;
+        uploadResource(function (err, res) {
+            if (err) {
+                alert(err);
+                return;
+            }
+            var postObj = {
+                body: content,
+            };
+            if (res) {
+                postObj.resources = [res];
+            }
+                console.dir(postObj);
+                ajax.post('/post', {
+                data: JSON.stringify(postObj)
+            }, function (res){
+                var o = JSON.parse(res);
+                if (o.code === 0) {
+                    window.location.href = "/";
+                    return;
+                }
+                submitBtn.disabled = false;
+                alert(o.error);
+            });
+        });
+    };
+    submitBtn.onclick = onSubmit;
+
+    function uploadResource(cb) {
+        if (!file) {
+            cb(null, null);
+        } else {
+            ajax.upload('http://panda.sibo.io/upload/img', file, function (err, res) {
+                if(err) {
+                    return cb(err);
+                }
+                var res = JSON.parse(res);
+                if (res.code === 0) {
+                     return cb(null, res.payload);
+                }
+                cb(new Error(res.error))
+            });
+        }
+    };
+
+    var resource = document.getElementById('resource');
+    var file = null;
+    resource.addEventListener('change', function (e) {
+        file = e.target.files[0];
+    });
+</script>
+{{ end }}

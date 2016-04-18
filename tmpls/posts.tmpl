@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width">
+        <title>Posts</title>
+    </head>
+    <body>
+        <nav>
+            <p>Welcome to <a href="/">Camphor</a></p>
+            <p><a href="/posts">Posts</a></p>
+            <p><a href="/post">Add new post</a></p>
+        </nav>
+        <h2>Posts</h2>
+        {{ range . }}
+        <div>
+            <dt><span class="time">{{.CreatedAt}}</span></dt>
+            <p>{{.Body}}</p>
+        </div>
+        {{ end }}
+    </body>
+</html>
