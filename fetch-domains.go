@@ -11,6 +11,8 @@ import (
 const URL_CHAR4 string = "http://char4.com/"
 const URL_CHAR5 string = "http://char5.com/"
 
+var IGNORE_DOMAINS = []string{"www.char3.com", "www.char4.com", "char5.com"}
+
 func download(url string) (result string, err error) {
 	response, err := http.Get(url)
 	if err != nil {
@@ -25,10 +27,37 @@ func download(url string) (result string, err error) {
 	return
 }
 
+func Index(vs []string, t string) int {
+	for i, v := range vs {
+		if v == t {
+			return i
+		}
+	}
+	return -1
+}
+
+func Filter(vs []string, f func(string) bool) []string {
+	vsf := make([]string, 0)
+	for _, v := range vs {
+		if f(v) {
+			vsf = append(vsf, v)
+		}
+	}
+	return vsf
+}
+
+func validDomain(domain string) bool {
+	return Index(IGNORE_DOMAINS, domain) == -1
+}
+
 func getDomainsFromPage(content string, charCount int) []string {
 	regexStr := fmt.Sprintf("www\\.[a-z0-9]{%d}\\.com", charCount)
 	r, _ := regexp.Compile(regexStr)
-	return r.FindAllString(content, -1)
+	domains := r.FindAllString(content, -1)
+	if charCount == 5 {
+		return Filter(domains, validDomain)
+	}
+	return domains
 }
 
 func fetchDomainsAndSave(url string, charCount int, saveTo string) {
