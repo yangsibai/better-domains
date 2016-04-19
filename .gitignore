@@ -3,7 +3,7 @@ public/
 
 .DS_Store
 better-domain
-char4.txt
-char5.txt
+bin/char4.txt
+bin/char5.txt
 
 main

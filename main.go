@@ -13,8 +13,8 @@ const PATTERN_ALL_LETTERS string = "ALL LETTERS"
 const PATTERN_ALL_NUMBERS string = "ALL NUMBERS"
 const PATTERN_ABCD string = "ABCD"
 
-const FILE_CHAR4 string = "char4.txt"
-const FILE_CHAR5 string = "char5.txt"
+const FILE_CHAR4 string = "bin/char4.txt"
+const FILE_CHAR5 string = "bin/char5.txt"
 
 var KEYWORDS []string
 
