@@ -1,5 +1,7 @@
+node_modules/
+public/
+
 .DS_Store
 better-domain
 char4.txt
 char5.txt
-node_modules/

@@ -18,6 +18,17 @@ const FILE_CHAR5 string = "char5.txt"
 
 var KEYWORDS []string
 
+type Domains struct {
+	Domains []string
+	Keyword []KeywordDomains
+}
+
+type KeywordDomains struct {
+	Keyword string
+	Domains []string
+}
+
+// filter domains by pattern
 func filter(domains []string, pattern string) (results []string) {
 	var r *regexp.Regexp
 	switch pattern {
@@ -36,30 +47,7 @@ func filter(domains []string, pattern string) (results []string) {
 	return
 }
 
-func findAndListDomains(w http.ResponseWriter, domains []string, title string, pattern string) {
-	sub_domains := filter(domains, pattern)
-	if len(sub_domains) == 0 {
-		return
-	}
-	fmt.Fprintf(w, "%s:\n", title)
-	for i := 0; i < len(sub_domains); i++ {
-		fmt.Fprintf(w, "%s\n", sub_domains[i])
-	}
-	fmt.Fprint(w, "\n")
-}
-
-func listFromURL(w http.ResponseWriter, domains []string, title string) {
-	fmt.Fprintf(w, "%s\n\n", title)
-
-	findAndListDomains(w, domains, "All Letters", PATTERN_ALL_LETTERS)
-
-	findAndListDomains(w, domains, "All Numbers", PATTERN_ALL_NUMBERS)
-
-	for i := 0; i < len(KEYWORDS); i++ {
-		findAndListDomains(w, domains, "Contain "+KEYWORDS[i], KEYWORDS[i])
-	}
-}
-
+// read domains from file
 func getDomainsFromFile(filename string) (domains []string, err error) {
 	bs, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -70,16 +58,7 @@ func getDomainsFromFile(filename string) (domains []string, err error) {
 	return
 }
 
-type Domains struct {
-	Domains []string
-	Keyword []KeywordDomains
-}
-
-type KeywordDomains struct {
-	Keyword string
-	Domains []string
-}
-
+// match domains to keywords
 func matchKeywords(domains []string) (result []KeywordDomains) {
 	result = append(result, KeywordDomains{"All Letters", filter(domains, PATTERN_ALL_LETTERS)})
 	result = append(result, KeywordDomains{"All Numbers", filter(domains, PATTERN_ALL_NUMBERS)})
@@ -89,7 +68,8 @@ func matchKeywords(domains []string) (result []KeywordDomains) {
 	return
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
+// handle home page
+func homeHanlder(w http.ResponseWriter, r *http.Request) {
 	char4_domains, err := getDomainsFromFile(FILE_CHAR4)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -111,21 +91,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 	t, _ := template.ParseFiles("tmpls/index.tmpl")
 	t.Execute(w, data)
-	//if err != nil {
-	//fmt.Fprintf(w, "%s\n", err.Error)
-	//} else {
-	//listFromURL(w, char4_domains, "4 Characters")
-	//}
-
-	//if err != nil {
-	//fmt.Fprintf(w, "%s\n", err.Error)
-	//} else {
-	//listFromURL(w, char5_domains, "5 Characters")
-	//}
 }
 
 func main() {
-	http.HandleFunc("/", handler)
+	http.HandleFunc("/", homeHanlder)
 	http.ListenAndServe(":9024", nil)
 	fmt.Println("test")
 }
