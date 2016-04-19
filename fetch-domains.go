@@ -11,7 +11,7 @@ import (
 const URL_CHAR4 string = "http://char4.com/"
 const URL_CHAR5 string = "http://char5.com/"
 
-var IGNORE_DOMAINS = []string{"www.char3.com", "www.char4.com", "char5.com"}
+var IGNORE_DOMAINS = []string{"www.char3.com", "www.char4.com", "www.char5.com"}
 
 func download(url string) (result string, err error) {
 	response, err := http.Get(url)
@@ -75,4 +75,5 @@ func fetchDomainsAndSave(url string, charCount int, saveTo string) {
 func fetchDomainsTick() {
 	fetchDomainsAndSave(URL_CHAR4, 4, FILE_CHAR4)
 	fetchDomainsAndSave(URL_CHAR5, 5, FILE_CHAR5)
+	fmt.Println("fetch domain done")
 }
