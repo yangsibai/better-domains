@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"regexp"
-	"strings"
+	"time"
 )
 
 const URL_CHAR4 string = "http://char4.com/"
@@ -13,6 +13,7 @@ const URL_CHAR5 string = "http://char5.com/"
 
 var IGNORE_DOMAINS = []string{"www.char3.com", "www.char4.com", "www.char5.com"}
 
+// download content from URL
 func download(url string) (result string, err error) {
 	response, err := http.Get(url)
 	if err != nil {
@@ -25,25 +26,6 @@ func download(url string) (result string, err error) {
 	}
 	result = string(contents)
 	return
-}
-
-func Index(vs []string, t string) int {
-	for i, v := range vs {
-		if v == t {
-			return i
-		}
-	}
-	return -1
-}
-
-func Filter(vs []string, f func(string) bool) []string {
-	vsf := make([]string, 0)
-	for _, v := range vs {
-		if f(v) {
-			vsf = append(vsf, v)
-		}
-	}
-	return vsf
 }
 
 func validDomain(domain string) bool {
@@ -60,20 +42,29 @@ func getDomainsFromPage(content string, charCount int) []string {
 	return domains
 }
 
-func fetchDomainsAndSave(url string, charCount int, saveTo string) {
+func fetchDomainsAndSave(url string, charCount int) {
 	result, err := download(url)
 	if err != nil {
 		panic(err)
 	}
 	domains := getDomainsFromPage(result, charCount)
-	err = ioutil.WriteFile(saveTo, []byte(strings.Join(domains, "\n")), 0644)
+	err = addDomains(domains)
 	if err != nil {
 		panic(err)
 	}
 }
 
 func fetchDomainsTick() {
-	fetchDomainsAndSave(URL_CHAR4, 4, FILE_CHAR4)
-	fetchDomainsAndSave(URL_CHAR5, 5, FILE_CHAR5)
-	fmt.Println("fetch domain done")
+	fetchDomainsAndSave(URL_CHAR4, 4)
+	fetchDomainsAndSave(URL_CHAR5, 5)
+}
+
+func fetchDomains() {
+	ticker := time.NewTicker(time.Minute * 10)
+	fetchDomainsTick() // fetch once
+	go func() {
+		for range ticker.C {
+			fetchDomainsTick()
+		}
+	}()
 }

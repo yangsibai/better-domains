@@ -38,30 +38,22 @@
     </style>
 </head>
 <body>
-    <h1>Domains</h1>
+    <h1>Watch list</h1>
     <nav>
-        <a href="/watch/new">Create watch list</a>
+        <a href="/">Home</a>
     </nav>
     <div class="home">
         <div>
-            <h3>4 characters domains</h3>
+            {{ range . }}
+                <h3>{{ .Keyword }}</h3>
             <div>
                 <ul>
-                    {{ range .Char4 }}
+                    {{ range .Domains }}
                         <li>{{ . }}</li>
                     {{ end }}
                 </ul>
             </div>
-        </div>
-        <div>
-            <h3>5 characters domains</h3>
-            <div>
-                <ul>
-                    {{ range .Char5 }}
-                        <li>{{ . }}</li>
-                    {{ end }}
-                </ul>
-            </div>
+            {{ end }}
         </div>
     </div>
 </body>
