@@ -22,6 +22,7 @@
     <form action="/watch/new" method="post">
         <p class="error-message">{{ . }}</p>
         <p>Patterns, one regex pattern at every line:</p>
+        <input name="name" placeholder="watch list name" />
         <textarea cols="30" rows="20" name="patterns" placeholder="Example:qq\d\d"></textarea>
         <button type="submit">Create</button>
     </form>

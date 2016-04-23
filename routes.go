@@ -48,10 +48,11 @@ func homeHanlder(w http.ResponseWriter, r *http.Request) {
 func createWatcherHandler(w http.ResponseWriter, r *http.Request) {
 	var errMessage string = ""
 	if r.Method == "POST" {
+		watcherName := strings.TrimSpace(r.FormValue("name"))
 		patternStr := strings.TrimSpace(r.FormValue("patterns"))
 		if patternStr != "" {
 			patterns := strings.Split(patternStr, "\n")
-			watcherID, err := addNewWatcher()
+			watcherID, err := addNewWatcher(watcherName)
 			if err != nil {
 				handleError(w, err)
 				return
@@ -76,6 +77,14 @@ func watcherHandler(w http.ResponseWriter, r *http.Request) {
 		createWatcherHandler(w, r)
 		return
 	}
+
+	name, err := getWatcherName(watchID)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
 	patterns, err := getPatterns(watchID)
 	if err != nil {
 		handleError(w, err)
@@ -91,12 +100,18 @@ func watcherHandler(w http.ResponseWriter, r *http.Request) {
 	filterDomains := matchKeywords(domains, patterns)
 
 	t, _ := template.ParseFiles("tmpls/watch.tmpl")
-	t.Execute(w, filterDomains)
+	t.Execute(w, struct {
+		Name    string
+		Domains []KeywordDomains
+	}{
+		name,
+		filterDomains,
+	})
 }
 
 // filter domains by pattern
 func filterByPattern(domains []string, pattern string) (results []string) {
-	r := regexp.MustCompile(pattern)
+	r := regexp.MustCompile("www\\.[^.]*" + strings.TrimSpace(pattern) + "[^.]*\\.com")
 	for _, domain := range domains {
 		if r.MatchString(domain) {
 			results = append(results, domain)

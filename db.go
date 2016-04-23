@@ -5,6 +5,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -46,11 +47,21 @@ const SQL_QUERY_BY_DOMAIN = "SELECT * FROM Domain WHERE domain = ?"
 const SQL_CREATE_TABLE_WATCHER string = `
 	CREATE TABLE IF NOT EXISTS Watcher (
 		id text not null primary key,
+		name text not null,
 		create_time timestamp not null,
 		update_time timestamp,
 		status text not null
 	)`
-const SQL_INSERT_NEW_WATCHER string = "INSERT INTO Watcher (id, create_time, status) VALUES (?, ?, ?)"
+const SQL_INSERT_NEW_WATCHER string = `
+	INSERT INTO Watcher (
+		id, name, create_time, status
+	) VALUES (
+		?, ?, ?, ?
+	)`
+const SQL_QUERY_WATCHER string = `
+	SELECT name
+	FROM Watcher
+	WHERE id = ?`
 
 // sql for patterns
 const SQL_CREATE_TABLE_PATTERN = `
@@ -183,14 +194,25 @@ func getAllAvailableDomains() (domains []string, err error) {
 }
 
 // create new watcher
-func addNewWatcher() (watcherID string, err error) {
+func addNewWatcher(name string) (watcherID string, err error) {
 	db, err := sql.Open(ENGINE, DATABASE)
 	if err != nil {
 		return
 	}
 	defer db.Close()
 	watcherID = makeID()
-	db.Exec(SQL_INSERT_NEW_WATCHER, watcherID, time.Now(), WATCHER_STATUS_NEW)
+	db.Exec(SQL_INSERT_NEW_WATCHER, watcherID, name, time.Now(), WATCHER_STATUS_NEW)
+	return
+}
+
+func getWatcherName(watcherID string) (name string, err error) {
+	db, err := sql.Open(ENGINE, DATABASE)
+	if err != nil {
+		return
+	}
+	defer db.Close()
+
+	err = db.QueryRow(SQL_QUERY_WATCHER, watcherID).Scan(&name)
 	return
 }
 
@@ -201,6 +223,7 @@ func addOrUpdatePatterns(watcherID string, patterns []string) (err error) {
 		return
 	}
 	defer db.Close()
+
 	_, err = db.Exec(SQL_DELETE_PATTERS, watcherID)
 	if err != nil {
 		return
@@ -217,7 +240,7 @@ func addOrUpdatePatterns(watcherID string, patterns []string) (err error) {
 	}
 	defer stmt.Close()
 	for _, pattern := range patterns {
-		_, err = stmt.Exec(makeID(), watcherID, pattern, pattern, time.Now())
+		_, err = stmt.Exec(makeID(), watcherID, strings.TrimSpace(pattern), strings.TrimSpace(pattern), time.Now())
 		check(err)
 	}
 	tx.Commit()
