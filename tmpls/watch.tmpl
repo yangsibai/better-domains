@@ -6,7 +6,7 @@
     <title>Domains</title>
     <link rel="stylesheet" href="/public/css/style.css" />
 </head>
-<body>
+<body class="watch list">
     <h1>Watch list: {{ .Name }}</h1>
     <nav>
         <a href="/">Home</a>
@@ -17,7 +17,7 @@
             {{ range .Domains }}
                 <h3>{{ .Keyword }}</h3>
             <div>
-                <ul>
+                <ul class="domains">
                     {{ range .Domains }}
                         <li>{{ . }}</li>
                     {{ end }}

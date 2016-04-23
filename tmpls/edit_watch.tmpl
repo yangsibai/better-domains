@@ -3,19 +3,26 @@
     <meta charset="utf-8">
     <link rel="shortcut icon" href="/public/favicon.ico"/>
     <meta name="viewport" content="width=device-width">
-    <title>Domains</title>
+    <title>Edit watch list</title>
     <link rel="stylesheet" href="/public/css/style.css" />
 </head>
-<body>
+<body class="watch edit">
     <h1>Edit watch list: {{ .Name }}</h1>
     <nav>
         <a href="/">Home</a>
     </nav>
+    {{ if .Error }}
+    <p class="error-message">{{ .Error }}</p>
+    {{ end }}
     <form action="/watch/edit/{{ .WatcherID }}" method="post">
-        <p class="error-message">{{ .Error }}</p>
-        <p>Patterns, one regex pattern at every line:</p>
-        <input name="name" placeholder="watch list name" value="{{ .Name }}" />
-        <textarea cols="30" rows="20" name="patterns" placeholder="Example:qq\d\d">{{ .Pattern }}</textarea>
+        <div class="item">
+            <p class="lab">List name:</p>
+            <input name="name" placeholder="watch list name" value="{{ .Name }}" />
+        </div>
+        <div class="item">
+            <p class="lab">List patterns, one regex pattern each line:</p>
+            <textarea cols="30" rows="20" name="patterns" placeholder="Example:qq\d\d">{{ .Pattern }}</textarea>
+        </div>
         <button type="submit">Update</button>
     </form>
 </body>
