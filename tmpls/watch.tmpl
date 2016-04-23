@@ -15,14 +15,16 @@
     <div class="home">
         <div>
             {{ range .Domains }}
+                {{ if .Domains }}
                 <h3>{{ .Keyword }}</h3>
-            <div>
-                <ul class="domains">
-                    {{ range .Domains }}
-                        <li>{{ . }}</li>
-                    {{ end }}
-                </ul>
-            </div>
+                <div>
+                    <ul class="domains">
+                        {{ range .Domains }}
+                            <li>{{ . }}</li>
+                        {{ end }}
+                    </ul>
+                </div>
+                {{ end }}
             {{ end }}
         </div>
     </div>
