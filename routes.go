@@ -15,6 +15,27 @@ type KeywordDomains struct {
 	Domains []string
 }
 
+type WatcherFormValue struct {
+	Name     string
+	Patterns []string
+}
+
+// read form value
+func readForm(r *http.Request) WatcherFormValue {
+	patternStr := strings.TrimSpace(r.FormValue("patterns"))
+	if patternStr != "" {
+		return WatcherFormValue{
+			r.FormValue("name"),
+			strings.Split(patternStr, "\n"),
+		}
+	}
+	return WatcherFormValue{
+		r.FormValue("name"),
+		nil,
+	}
+}
+
+// handle server error
 func handleError(w http.ResponseWriter, err error) {
 	http.Error(w, err.Error(), http.StatusInternalServerError)
 }
@@ -45,19 +66,18 @@ func homeHanlder(w http.ResponseWriter, r *http.Request) {
 	t.Execute(w, data)
 }
 
+// create watcher handler
 func createWatcherHandler(w http.ResponseWriter, r *http.Request) {
 	var errMessage string = ""
 	if r.Method == "POST" {
-		watcherName := strings.TrimSpace(r.FormValue("name"))
-		patternStr := strings.TrimSpace(r.FormValue("patterns"))
-		if patternStr != "" {
-			patterns := strings.Split(patternStr, "\n")
-			watcherID, err := addNewWatcher(watcherName)
+		form := readForm(r)
+		if len(form.Patterns) > 0 {
+			watcherID, err := addNewWatcher(form.Name)
 			if err != nil {
 				handleError(w, err)
 				return
 			}
-			err = addOrUpdatePatterns(watcherID, patterns)
+			err = addOrUpdatePatterns(watcherID, form.Patterns)
 			if err != nil {
 				handleError(w, err)
 				return
@@ -71,10 +91,63 @@ func createWatcherHandler(w http.ResponseWriter, r *http.Request) {
 	t.Execute(w, errMessage)
 }
 
+// update watcher
+func editWatcherHandler(w http.ResponseWriter, r *http.Request) {
+	watcherID := r.URL.Path[len("/watch/edit/"):]
+	var errMessage string = ""
+	var name string
+
+	t, _ := template.ParseFiles("tmpls/edit_watch.tmpl")
+
+	if r.Method == "POST" {
+		form := readForm(r)
+		err := updateWatcherName(watcherID, form.Name)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		err = addOrUpdatePatterns(watcherID, form.Patterns)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		http.Redirect(w, r, "/watch/"+watcherID, http.StatusTemporaryRedirect)
+
+		return
+	}
+	name, err := getWatcherName(watcherID)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	patterns, err := getPatterns(watcherID)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	t.Execute(w, struct {
+		WatcherID string
+		Name      string
+		Error     string
+		Pattern   string
+	}{
+		watcherID,
+		name,
+		errMessage,
+		strings.Join(patterns, "\n"),
+	})
+}
+
 func watcherHandler(w http.ResponseWriter, r *http.Request) {
 	watchID := r.URL.Path[len("/watch/"):]
 	if watchID == "new" {
 		createWatcherHandler(w, r)
+		return
+	} else if strings.Index(watchID, "edit") != -1 {
+		editWatcherHandler(w, r)
 		return
 	}
 
@@ -101,9 +174,11 @@ func watcherHandler(w http.ResponseWriter, r *http.Request) {
 
 	t, _ := template.ParseFiles("tmpls/watch.tmpl")
 	t.Execute(w, struct {
-		Name    string
-		Domains []KeywordDomains
+		WatcherID string
+		Name      string
+		Domains   []KeywordDomains
 	}{
+		watchID,
 		name,
 		filterDomains,
 	})

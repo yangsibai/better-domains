@@ -1,0 +1,30 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Domains</title>
+    <style>
+    html, body{
+        font-family: "Monaco", "Microsoft Yahei", Arial, "Helvetica Neue", Helvetica, "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Geneva, Verdana, sans-serif;
+        padding: 20px 10px;
+        font-weight: 100;
+    }
+    .error-message {
+        color: #f00;
+    }
+    </style>
+</head>
+<body>
+    <h1>Edit watch list: {{ .Name }}</h1>
+    <nav>
+        <a href="/">Home</a>
+    </nav>
+    <form action="/watch/edit/{{ .WatcherID }}" method="post">
+        <p class="error-message">{{ .Error }}</p>
+        <p>Patterns, one regex pattern at every line:</p>
+        <input name="name" placeholder="watch list name" value="{{ .Name }}" />
+        <textarea cols="30" rows="20" name="patterns" placeholder="Example:qq\d\d">{{ .Pattern }}</textarea>
+        <button type="submit">Update</button>
+    </form>
+</body>
+</html>

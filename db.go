@@ -62,6 +62,10 @@ const SQL_QUERY_WATCHER string = `
 	SELECT name
 	FROM Watcher
 	WHERE id = ?`
+const SQL_UPDATE_WATCHER_NAME string = `
+	UPDATE Watcher
+	SET name = ?
+	WHERE id = ?`
 
 // sql for patterns
 const SQL_CREATE_TABLE_PATTERN = `
@@ -214,6 +218,17 @@ func getWatcherName(watcherID string) (name string, err error) {
 
 	err = db.QueryRow(SQL_QUERY_WATCHER, watcherID).Scan(&name)
 	return
+}
+
+// update watcher name
+func updateWatcherName(watcherID string, name string) error {
+	db, err := sql.Open(ENGINE, DATABASE)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	_, err = db.Exec(SQL_UPDATE_WATCHER_NAME, name, watcherID)
+	return err
 }
 
 // add or update patterns
