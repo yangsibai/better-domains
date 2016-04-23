@@ -10,7 +10,6 @@
 html, body {
     font-family: "Microsoft Yahei", Arial,"Helvetica Neue",Helvetica,"Lucida Grande","Lucida Sans Unicode","Lucida Sans",Geneva,Verdana,sans-serif;
     background: @color-GOFUN;
-    text-align: center;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -27,172 +26,17 @@ nav {
     }
 }
 
-.welcome {
-    font-size: 20px;
-    color: @color-RO;
-    a {
-        text-decoration: none;
-    }
-}
-
-header {
-    border-bottom: 1px solid @color-TSUYUKUSA;
-}
-
-footer {
-    padding: 10px 0;
-    color: @color-KOHBAI;
-    font-size: 12px;
-}
-
-.post {
-    padding: 30px 10px;
-    color: @color-KUROTSURUBAMI;
-    border-bottom: 1px solid @color-WAKATAKE;
-    .label {
-        font-size: 12px;
-        color: @color-SUNEZUMI;
-        .link {
-            color: @color-TSUYUKUSA;
-            &:visited {
-                 color: @color-SUNEZUMI;
-            }
-        }
-    }
-    .body {
-        font-size: 14px;
-        line-height: 2em;
-    }
-    .resources {
-        margin: 10px 0;
-        padding: 0;
-        list-style: none;
-        img {
-            max-width: 400px;
-            height: auto;
-            cursor: zoom-in;
-        }
-    }
-}
-
 .home {
-    .posts {
-        margin: 20px 0;
-        width: 700px;
-        margin: auto;
-        .post {
-            text-align: left;
-            .label {
-                float: right;
-            }
-        }
-    }
-}
-
-.add_post {
-    .form {
-        margin: 10px 0;
-        textarea {
-            background-color: #f9f9f9;
-            border-radius: 4px;
-            border: 1px solid #ddd;
-            outline: none;
-            background-clip: padding-box;
-            padding: 0;
-            margin: 0;
-            font-size: 16px;
-            height: 200px;
-            width: 400px;
-        }
-        .resources {
-            .resource {
-                display: none;
-                &:first-child {
-                    display: block;
-                }
-            }
-        }
-        .btns {
-            margin: 10px 0;
-            .submit {
-                width: 100px;
-                height: 40px;
-                outline: none;
-                background-color: @color-TSUYUKUSA;
-                font-family: 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;
-                border: none;
-                border-radius: 3px;
-                color: #FFF;
-            }
-        }
-    }
-}
-
-@media only screen and (max-device-width:736px) {
-    .add_post {
-        text-align: center;
-        .form textarea {
-            width: 100%;
-        }
-    }
-    .home {
-        .posts {
-            width: 100%;
-        }
-    }
-}
-
-.login {
-    .page-title {
-        font-weight: 300;
-    }
-    .message {
-        color: red;
-        font-size: 14px;
-    }
-    form {
-        > div {
-            margin: 10px 0;
-            label {
-                display: block;
-            }
-            input {
-                margin: 5px 0;
-                padding: 0 3px;
-                width: 200px;
-                line-height: 24px;
-            }
-        }
-        button {
-             width: 80px;
-             height: 24px;
-             outline: none;
-             border: none;
-        }
-    }
-}
-
-.single-post {
-    .post {
-        border-bottom: none;
-        .body {
-            margin: 4em 0;
-            font-size: 2em;
-            font-weight: normal;
-        }
-        .label {
-            .time {
-                display: block;
-            }
-            .link {
-                color: @color-RO;
-                font-size: 12px;
-            }
-        }
-        .resources {
-            img {
-                 max-width: 100%;
-            }
+    ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        li {
+            margin-right: 5px;
+            line-height: 1.6em;
+            display: inline-block;
+            font-size: 12px;
+            font-family: "Monaco", "Microsoft Yahei", Arial, "Helvetica Neue", Helvetica, "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Geneva, Verdana, sans-serif;
         }
     }
 }
