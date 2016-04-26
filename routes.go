@@ -1,35 +1,49 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"net/http"
 	"regexp"
 	"strings"
 )
 
-const CHAR4_DOMAIN_LENGTH int = len("www.abcd.com")
-const CHAR5_DOMAIN_LENGTH int = len("www.abcde.com")
+const char4DomainLength int = len("www.abcd.com")
+const char5DomainLength int = len("www.abcde.com")
 
-type KeywordDomains struct {
+type keywordDomains struct {
 	Keyword string
 	Domains []string
 }
 
-type WatcherFormValue struct {
+type watcherFormValue struct {
+	ID       string
 	Name     string
 	Patterns []string
 }
 
+type watcherPage struct {
+	Button    string
+	PageTitle string
+	SubmitURL string
+	WatcherID string
+	Name      string
+	Error     string
+	Pattern   string
+}
+
 // read form value
-func readForm(r *http.Request) WatcherFormValue {
+func readForm(r *http.Request) watcherFormValue {
 	patternStr := strings.TrimSpace(r.FormValue("patterns"))
 	if patternStr != "" {
-		return WatcherFormValue{
+		return watcherFormValue{
+			r.FormValue("ID"),
 			r.FormValue("name"),
 			strings.Split(patternStr, "\n"),
 		}
 	}
-	return WatcherFormValue{
+	return watcherFormValue{
+		r.FormValue("ID"),
 		r.FormValue("name"),
 		nil,
 	}
@@ -47,98 +61,118 @@ func homeHanlder(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	char4_domains := Filter(domains, func(domain string) bool {
-		return len(domain) == CHAR4_DOMAIN_LENGTH
+	char4Domains := filter(domains, func(domain string) bool {
+		return len(domain) == char4DomainLength
 	})
 
-	char5_domains := Filter(domains, func(domain string) bool {
-		return len(domain) == CHAR5_DOMAIN_LENGTH
+	char5Domains := filter(domains, func(domain string) bool {
+		return len(domain) == char5DomainLength
 	})
 
 	data := struct {
 		Char4 []string
 		Char5 []string
 	}{
-		char4_domains,
-		char5_domains,
+		char4Domains,
+		char5Domains,
 	}
 	t, _ := template.ParseFiles("tmpls/index.tmpl")
 	t.Execute(w, data)
 }
 
+func renderWatcherEditOrAdd(w http.ResponseWriter, isAdd bool, page watcherPage) {
+	if isAdd {
+		page.SubmitURL = "/watch/new/" + page.WatcherID
+		page.PageTitle = "Add new watch list"
+		page.Button = "Create"
+	} else {
+		page.SubmitURL = "/watch/edit/" + page.WatcherID
+		page.PageTitle = "Edit watch list"
+		page.Button = "Update"
+	}
+	t, _ := template.ParseFiles("tmpls/edit_watch.tmpl")
+	t.Execute(w, page)
+}
+
 // create watcher handler
 func createWatcherHandler(w http.ResponseWriter, r *http.Request) {
-	var errMessage string = ""
+	var pageValue watcherPage
 	if r.Method == "POST" {
 		form := readForm(r)
-		if len(form.Patterns) > 0 {
-			watcherID, err := addNewWatcher(form.Name)
-			if err != nil {
-				handleError(w, err)
-				return
-			}
-			err = addOrUpdatePatterns(watcherID, form.Patterns)
-			if err != nil {
-				handleError(w, err)
-				return
-			}
-			http.Redirect(w, r, "/watch/"+watcherID, http.StatusTemporaryRedirect)
+		pageValue.Name = form.Name
+		pageValue.Pattern = strings.Join(form.Patterns, "\n")
+		pageValue.WatcherID = form.ID
+
+		if len(form.Patterns) == 0 {
+			pageValue.Error = "Must have at least one pattern."
+			renderWatcherEditOrAdd(w, true, pageValue)
 			return
 		}
-		errMessage = "Must have at least one pattern."
+
+		watcherID, err := addNewWatcher(form.ID, form.Name)
+		if err != nil {
+			pageValue.Error = err.Error()
+			renderWatcherEditOrAdd(w, true, pageValue)
+			return
+		}
+		err = addOrUpdatePatterns(watcherID, form.Patterns)
+		if err != nil {
+			pageValue.Error = err.Error()
+			renderWatcherEditOrAdd(w, true, pageValue)
+			return
+		}
+		http.Redirect(w, r, "/watch/"+watcherID, http.StatusTemporaryRedirect)
+		return
 	}
-	t, _ := template.ParseFiles("tmpls/new_watch.tmpl")
-	t.Execute(w, errMessage)
+	renderWatcherEditOrAdd(w, true, pageValue)
 }
 
 // update watcher
 func editWatcherHandler(w http.ResponseWriter, r *http.Request) {
 	watcherID := r.URL.Path[len("/watch/edit/"):]
-	var errMessage string = ""
-	var name string
-
-	t, _ := template.ParseFiles("tmpls/edit_watch.tmpl")
+	var page watcherPage
 
 	if r.Method == "POST" {
 		form := readForm(r)
-		err := updateWatcherName(watcherID, form.Name)
+		page.Name = form.Name
+		page.Pattern = strings.Join(form.Patterns, "\n")
+		page.WatcherID = form.ID
+
+		err := updateWatcher(watcherID, form.ID, form.Name)
 		if err != nil {
-			handleError(w, err)
+			page.Error = err.Error()
+			renderWatcherEditOrAdd(w, false, page)
 			return
 		}
 
-		err = addOrUpdatePatterns(watcherID, form.Patterns)
+		err = addOrUpdatePatterns(form.ID, form.Patterns)
 		if err != nil {
-			handleError(w, err)
+			page.Error = err.Error()
+			renderWatcherEditOrAdd(w, false, page)
 			return
 		}
 
-		http.Redirect(w, r, "/watch/"+watcherID, http.StatusTemporaryRedirect)
-
+		http.Redirect(w, r, "/watch/"+form.ID, http.StatusTemporaryRedirect)
 		return
 	}
+
 	name, err := getWatcherName(watcherID)
 	if err != nil {
-		handleError(w, err)
+		page.Error = err.Error()
+		renderWatcherEditOrAdd(w, false, page)
 		return
 	}
+	page.Name = name
 
 	patterns, err := getPatterns(watcherID)
 	if err != nil {
-		handleError(w, err)
+		page.Error = err.Error()
+		renderWatcherEditOrAdd(w, false, page)
 		return
 	}
-	t.Execute(w, struct {
-		WatcherID string
-		Name      string
-		Error     string
-		Pattern   string
-	}{
-		watcherID,
-		name,
-		errMessage,
-		strings.Join(patterns, "\n"),
-	})
+	page.Pattern = strings.Join(patterns, "\n")
+
+	renderWatcherEditOrAdd(w, false, page)
 }
 
 func watcherHandler(w http.ResponseWriter, r *http.Request) {
@@ -176,7 +210,7 @@ func watcherHandler(w http.ResponseWriter, r *http.Request) {
 	t.Execute(w, struct {
 		WatcherID string
 		Name      string
-		Domains   []KeywordDomains
+		Domains   []keywordDomains
 	}{
 		watchID,
 		name,
@@ -196,9 +230,9 @@ func filterByPattern(domains []string, pattern string) (results []string) {
 }
 
 // match domains to keywords
-func matchKeywords(domains []string, patterns []string) (result []KeywordDomains) {
+func matchKeywords(domains []string, patterns []string) (result []keywordDomains) {
 	for _, pattern := range patterns {
-		result = append(result, KeywordDomains{pattern, filterByPattern(domains, pattern)})
+		result = append(result, keywordDomains{pattern, filterByPattern(domains, pattern)})
 	}
 	return
 }

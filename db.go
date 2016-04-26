@@ -2,97 +2,22 @@ package main
 
 import (
 	"database/sql"
-	_ "github.com/mattn/go-sqlite3"
+	"errors"
+	_ "github.com/go-sql-driver/mysql"
 	"log"
 	"strconv"
 	"strings"
 	"time"
 )
 
-const ENGINE string = "sqlite3"
-const DATABASE string = "domain.db"
+const driverName string = "mysql"
+const dataSourceName string = "root:@/domains"
 
-const DOMAIN_STATUS_NEW string = "NEW"
-const DOMAIN_STATUS_REGISTERED string = "REGISTERED"
+const domainStatusNew string = "NEW"
+const domainStatusRegistered string = "REGISTERED"
 
-const WATCHER_STATUS_NEW string = "NEW"
-const WATCHER_STATUS_DELETED string = "DELETED"
-
-type Pattern struct {
-	name    string
-	pattern string
-}
-
-// sqls
-// sql for domains
-const SQL_CREATE_TABLE_DOMAIN = `
-	CREATE TABLE IF NOT EXISTS Domain (
-		id text not null primary key,
-		domain text not null,
-		create_time timestamp not null,
-		update_time timestamp,
-		status text not null
-	)`
-const SQL_QUERY_DOMAINS = "SELECT domain FROM Domain WHERE status = ?"
-const SQL_INSERT_NEW_DOMAIN string = `
-	INSERT INTO Domain(id, domain, create_time, status)
-	VALUES (?, ?, ?, ?)`
-const SQL_UPDATE_DOMAIN string = `
-	UPDATE Domain
-	SET status = ?
-	WHERE id = ?`
-const SQL_QUERY_BY_DOMAIN = "SELECT * FROM Domain WHERE domain = ?"
-
-// sql for watchers
-const SQL_CREATE_TABLE_WATCHER string = `
-	CREATE TABLE IF NOT EXISTS Watcher (
-		id text not null primary key,
-		name text not null,
-		create_time timestamp not null,
-		update_time timestamp,
-		status text not null
-	)`
-const SQL_INSERT_NEW_WATCHER string = `
-	INSERT INTO Watcher (
-		id, name, create_time, status
-	) VALUES (
-		?, ?, ?, ?
-	)`
-const SQL_QUERY_WATCHER string = `
-	SELECT name
-	FROM Watcher
-	WHERE id = ?`
-const SQL_UPDATE_WATCHER_NAME string = `
-	UPDATE Watcher
-	SET name = ?
-	WHERE id = ?`
-
-// sql for patterns
-const SQL_CREATE_TABLE_PATTERN = `
-	CREATE TABLE IF NOT EXISTS Pattern (
-		id text not null primary key,
-		watcherID text not null,
-		name text not null,
-		pattern text not null,
-		create_time timestamp not null,
-		update_time timestamp
-	)`
-const SQL_DELETE_PATTERS string = "DELETE FROM Pattern WHERE watcherID = ?"
-const SQL_INSERT_NEW_PATTERN string = `
-	INSERT INTO Pattern (
-		id, watcherID, name, pattern, create_time
-	)
-	VALUES (
-		?, ?, ?, ?, ?
-	)`
-const SQL_QUERY_PATTERNS string = "SELECT pattern FROM Pattern WHERE watcherID = ?"
-
-type Domain struct {
-	id          string
-	domain      string
-	create_time time.Time
-	update_time time.Time
-}
+const watcherStatusNew string = "NEW"
+const watcherStatusDeleted string = "DELETED"
 
 // check error, if error is not nil, panic
 func check(err error) {
@@ -109,36 +34,67 @@ func makeID() string {
 
 // initial database if need
 func initDatabaseIfNeed() {
-	db, err := sql.Open(ENGINE, DATABASE)
+	db, err := sql.Open(driverName, dataSourceName)
 	check(err)
 	defer db.Close()
 
-	_, err = db.Exec(SQL_CREATE_TABLE_DOMAIN)
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS Domain (
+			id int not null primary key auto_increment,
+			domain varchar(13) not null,
+			create_time datetime not null,
+			update_time datetime,
+			status text not null
+		) engine = innodb default charset = utf8
+		`)
 	check(err)
 
-	_, err = db.Exec(SQL_CREATE_TABLE_WATCHER)
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS Watcher (
+			id varchar(50) not null primary key,
+			name text not null,
+			create_time datetime not null,
+			update_time datetime,
+			status text not null
+		) engine = innodb default charset = utf8
+		`)
 	check(err)
 
-	sqlCreateTablePattern := SQL_CREATE_TABLE_PATTERN
-	_, err = db.Exec(sqlCreateTablePattern)
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS Pattern (
+			id int not null primary key auto_increment,
+			watcherID text not null,
+			name text not null,
+			pattern text not null,
+			create_time datetime not null,
+			update_time datetime
+		) engine = innodb default charset = utf8
+		`)
 	check(err)
 }
 
-// detect domain has exist
-func exist(domain string) bool {
-	db, err := sql.Open(ENGINE, DATABASE)
-	check(err)
+// get all domains, including new, registered
+func getAllDomains() (domains []string, err error) {
+	db, err := sql.Open(driverName, dataSourceName)
+	if err != nil {
+		return
+	}
 	defer db.Close()
-
-	rows, err := db.Query(SQL_QUERY_BY_DOMAIN, domain)
-	check(err)
-
-	return rows.Next()
+	rows, err := db.Query(`SELECT domain FROM Domain`)
+	if err != nil {
+		panic(err)
+	}
+	for rows.Next() {
+		var domain string
+		rows.Scan(&domain)
+		domains = append(domains, domain)
+	}
+	return
 }
 
 // insert domains
 func addDomains(domains []string) (err error) {
-	db, err := sql.Open(ENGINE, DATABASE)
+	db, err := sql.Open(driverName, dataSourceName)
 	if err != nil {
 		return
 	}
@@ -149,14 +105,26 @@ func addDomains(domains []string) (err error) {
 		return
 	}
 
-	stmt, err := tx.Prepare(SQL_INSERT_NEW_DOMAIN)
+	stmt, err := tx.Prepare(`
+		INSERT INTO Domain(
+			domain, create_time, status
+		)
+		VALUES (
+			?, now(), ?
+		)`)
 	if err != nil {
 		return
 	}
 	defer stmt.Close()
+
+	existedDomains, err := getAllDomains()
+	if err != nil {
+		return
+	}
+
 	for _, domain := range domains {
-		if !exist(domain) {
-			_, err = stmt.Exec(makeID(), domain, time.Now(), DOMAIN_STATUS_NEW)
+		if !contains(existedDomains, domain) {
+			_, err = stmt.Exec(domain, domainStatusNew)
 			check(err)
 		}
 	}
@@ -166,24 +134,28 @@ func addDomains(domains []string) (err error) {
 
 // set domain has been registered
 func updateDomainAsRegistered(domain string) (err error) {
-	db, err := sql.Open(ENGINE, DATABASE)
+	db, err := sql.Open(driverName, dataSourceName)
 	if err != nil {
 		return
 	}
 	defer db.Close()
-	_, err = db.Exec(SQL_UPDATE_DOMAIN, DOMAIN_STATUS_REGISTERED, domain)
+	_, err = db.Exec(`
+		UPDATE Domain
+		SET status = ?
+		WHERE id = ?
+		`, domainStatusRegistered, domain)
 	return
 }
 
 // get all available domains
 func getAllAvailableDomains() (domains []string, err error) {
-	db, err := sql.Open(ENGINE, DATABASE)
+	db, err := sql.Open(driverName, dataSourceName)
 	if err != nil {
 		return
 	}
 	defer db.Close()
 
-	rows, err := db.Query(SQL_QUERY_DOMAINS, DOMAIN_STATUS_NEW)
+	rows, err := db.Query(`SELECT domain FROM Domain WHERE status = ?`, domainStatusNew)
 	if err != nil {
 		return
 	}
@@ -198,48 +170,95 @@ func getAllAvailableDomains() (domains []string, err error) {
 }
 
 // create new watcher
-func addNewWatcher(name string) (watcherID string, err error) {
-	db, err := sql.Open(ENGINE, DATABASE)
+func addNewWatcher(newID, name string) (watcherID string, err error) {
+	db, err := sql.Open(driverName, dataSourceName)
 	if err != nil {
 		return
 	}
 	defer db.Close()
-	watcherID = makeID()
-	db.Exec(SQL_INSERT_NEW_WATCHER, watcherID, name, time.Now(), WATCHER_STATUS_NEW)
+
+	if newID != "" {
+		watcherID = newID
+	} else {
+		watcherID = makeID()
+	}
+
+	isExists, err := isWatcherIDExists(watcherID)
+	if err != nil {
+		return
+	}
+	if isExists {
+		err = errors.New("address is exists")
+		return
+	}
+
+	db.Exec(`
+		INSERT INTO Watcher (
+			id, name, create_time, status
+		) VALUES (
+			?, ?, now(), ?
+		)`, watcherID, name, watcherStatusNew)
 	return
 }
 
 func getWatcherName(watcherID string) (name string, err error) {
-	db, err := sql.Open(ENGINE, DATABASE)
+	db, err := sql.Open(driverName, dataSourceName)
 	if err != nil {
 		return
 	}
 	defer db.Close()
 
-	err = db.QueryRow(SQL_QUERY_WATCHER, watcherID).Scan(&name)
+	err = db.QueryRow(`SELECT name FROM Watcher WHERE id = ?`, watcherID).Scan(&name)
 	return
 }
 
+// detect is watcher ID exists
+func isWatcherIDExists(watcherID string) (bool, error) {
+	db, err := sql.Open(driverName, dataSourceName)
+	if err != nil {
+		return false, err
+	}
+	defer db.Close()
+
+	var exist int
+	err = db.QueryRow(`SELECT EXISTS(SELECT ID FROM Watcher WHERE ID = ?) as exist`, watcherID).Scan(&exist)
+
+	if err != nil {
+		return false, err
+	}
+	return exist == 1, nil
+}
+
 // update watcher name
-func updateWatcherName(watcherID string, name string) error {
-	db, err := sql.Open(ENGINE, DATABASE)
+func updateWatcher(watcherID string, newWatcherID string, name string) error {
+	if watcherID != newWatcherID {
+		isExists, err := isWatcherIDExists(newWatcherID)
+		if err != nil {
+			return err
+		}
+		if isExists {
+			return errors.New("address is exists")
+		}
+	}
+
+	db, err := sql.Open(driverName, dataSourceName)
 	if err != nil {
 		return err
 	}
 	defer db.Close()
-	_, err = db.Exec(SQL_UPDATE_WATCHER_NAME, name, watcherID)
+	_, err = db.Exec(`UPDATE Watcher SET ID = ?, name = ? WHERE ID = ?`, newWatcherID, name, watcherID)
 	return err
 }
 
 // add or update patterns
 func addOrUpdatePatterns(watcherID string, patterns []string) (err error) {
-	db, err := sql.Open(ENGINE, DATABASE)
+	db, err := sql.Open(driverName, dataSourceName)
 	if err != nil {
 		return
 	}
 	defer db.Close()
 
-	_, err = db.Exec(SQL_DELETE_PATTERS, watcherID)
+	_, err = db.Exec(`DELETE FROM Pattern WHERE watcherID = ?`, watcherID)
 	if err != nil {
 		return
 	}
@@ -249,13 +268,20 @@ func addOrUpdatePatterns(watcherID string, patterns []string) (err error) {
 		return
 	}
 
-	stmt, err := tx.Prepare(SQL_INSERT_NEW_PATTERN)
+	stmt, err := tx.Prepare(`
+	INSERT INTO Pattern (
+		watcherID, name, pattern, create_time
+	)
+	VALUES (
+		?, ?, ?, now()
+	)
+	`)
 	if err != nil {
 		return
 	}
 	defer stmt.Close()
 	for _, pattern := range patterns {
-		_, err = stmt.Exec(makeID(), watcherID, strings.TrimSpace(pattern), strings.TrimSpace(pattern), time.Now())
+		_, err = stmt.Exec(watcherID, strings.TrimSpace(pattern), strings.TrimSpace(pattern))
 		check(err)
 	}
 	tx.Commit()
@@ -265,13 +291,13 @@ func addOrUpdatePatterns(watcherID string, patterns []string) (err error) {
 
 // get all patterns by watcherID
 func getPatterns(watcherID string) (patterns []string, err error) {
-	db, err := sql.Open(ENGINE, DATABASE)
+	db, err := sql.Open(driverName, dataSourceName)
 	if err != nil {
 		return
 	}
 	defer db.Close()
 
-	rows, err := db.Query(SQL_QUERY_PATTERNS, watcherID)
+	rows, err := db.Query(`SELECT pattern FROM Pattern WHERE watcherID = ?`, watcherID)
 	if err != nil {
 		return
 	}

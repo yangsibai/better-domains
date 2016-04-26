@@ -1,6 +1,6 @@
 package main
 
-func Index(vs []string, t string) int {
+func index(vs []string, t string) int {
 	for i, v := range vs {
 		if v == t {
 			return i
@@ -9,7 +9,7 @@ func Index(vs []string, t string) int {
 	return -1
 }
 
-func Filter(vs []string, f func(string) bool) []string {
+func filter(vs []string, f func(string) bool) []string {
 	vsf := make([]string, 0)
 	for _, v := range vs {
 		if f(v) {
@@ -17,4 +17,8 @@ func Filter(vs []string, f func(string) bool) []string {
 		}
 	}
 	return vsf
+}
+
+func contains(vs []string, t string) bool {
+	return index(vs, t) != -1
 }

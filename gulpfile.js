@@ -220,8 +220,7 @@ gulp.task('server:watch', function() {
  * Build assets and application server.
  */
 gulp.task('build', [
-    'assets:build',
-    'server:build'
+    'assets:build'
 ]);
 
 /*

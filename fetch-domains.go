@@ -8,10 +8,10 @@ import (
 	"time"
 )
 
-const URL_CHAR4 string = "http://char4.com/"
-const URL_CHAR5 string = "http://char5.com/"
+const char4URL string = "http://char4.com/"
+const char5URL string = "http://char5.com/"
 
-var IGNORE_DOMAINS = []string{"www.char3.com", "www.char4.com", "www.char5.com"}
+var domainsIgnore = []string{"www.char3.com", "www.char4.com", "www.char5.com"}
 
 // download content from URL
 func download(url string) (result string, err error) {
@@ -29,7 +29,7 @@ func download(url string) (result string, err error) {
 }
 
 func validDomain(domain string) bool {
-	return Index(IGNORE_DOMAINS, domain) == -1
+	return index(domainsIgnore, domain) == -1
 }
 
 func getDomainsFromPage(content string, charCount int) []string {
@@ -37,7 +37,7 @@ func getDomainsFromPage(content string, charCount int) []string {
 	r, _ := regexp.Compile(regexStr)
 	domains := r.FindAllString(content, -1)
 	if charCount == 5 {
-		return Filter(domains, validDomain)
+		return filter(domains, validDomain)
 	}
 	return domains
 }
@@ -55,8 +55,8 @@ func fetchDomainsAndSave(url string, charCount int) {
 }
 
 func fetchDomainsTick() {
-	fetchDomainsAndSave(URL_CHAR4, 4)
-	fetchDomainsAndSave(URL_CHAR5, 5)
+	fetchDomainsAndSave(char4URL, 4)
+	fetchDomainsAndSave(char5URL, 5)
 }
 
 func fetchDomains() {

@@ -3,27 +3,31 @@
     <meta charset="utf-8">
     <link rel="shortcut icon" href="/public/favicon.ico"/>
     <meta name="viewport" content="width=device-width">
-    <title>Edit watch list</title>
+    <title>{{ .PageTitle }}</title>
     <link rel="stylesheet" href="/public/css/style.css" />
 </head>
 <body class="watch edit">
-    <h1>Edit watch list: {{ .Name }}</h1>
+    <h1>{{ .PageTitle }}: {{ .Name }}</h1>
     <nav>
         <a href="/">Home</a>
     </nav>
     {{ if .Error }}
     <p class="error-message">{{ .Error }}</p>
     {{ end }}
-    <form action="/watch/edit/{{ .WatcherID }}" method="post">
+    <form action="{{.SubmitURL}}" method="post">
         <div class="item">
-            <p class="lab">List name:</p>
-            <input name="name" placeholder="watch list name" value="{{ .Name }}" />
+            <p class="lab">Address:</p>
+            <span class="address">http://domain.sibo.io/watch/<input class="list-ID" placeholder="(optional)" name="ID" value="{{ .WatcherID }}"></input></span>
         </div>
         <div class="item">
-            <p class="lab">List patterns, one regex pattern each line:</p>
-            <textarea cols="30" rows="20" name="patterns" placeholder="Example:qq\d\d">{{ .Pattern }}</textarea>
+            <p class="lab">Name:</p>
+            <input name="name" placeholder="list name(optinal)" value="{{ .Name }}" />
         </div>
-        <button type="submit">Update</button>
+        <div class="item">
+            <p class="lab">Patterns, one regex pattern each line:</p>
+            <textarea cols="30" rows="20" name="patterns" placeholder="Example:qq\d\d(required)">{{ .Pattern }}</textarea>
+        </div>
+        <button type="submit">{{ .Button }}</button>
     </form>
 </body>
 </html>
