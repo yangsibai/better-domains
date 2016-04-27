@@ -132,18 +132,39 @@ func addDomains(domains []string) (err error) {
 	return
 }
 
-// set domain has been registered
-func updateDomainAsRegistered(domain string) (err error) {
+func getADomainToCheck() (domain string, err error) {
 	db, err := sql.Open(driverName, dataSourceName)
 	if err != nil {
 		return
 	}
 	defer db.Close()
+	err = db.QueryRow(`
+	SELECT domain
+	FROM domain
+	WHERE update_time IS NULL OR update_time < DATE_ADD(now(), INTERVAL -1 HOUR)
+	LIMIT 1;`).Scan(&domain)
+	return
+}
+
+// set domain has been registered
+func updateDomainStatus(domain string, isRegistered bool) (err error) {
+	db, err := sql.Open(driverName, dataSourceName)
+	if err != nil {
+		return
+	}
+	defer db.Close()
+	var status string
+	if isRegistered {
+		status = domainStatusRegistered
+	} else {
+		status = domainStatusNew
+	}
+
 	_, err = db.Exec(`
 		UPDATE Domain
-		SET status = ?
-		WHERE id = ?
-		`, domainStatusRegistered, domain)
+		SET status = ?, update_time = now()
+		WHERE domain = ?
+		`, status, domain)
 	return
 }
 

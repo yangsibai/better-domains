@@ -68,3 +68,30 @@ func fetchDomains() {
 		}
 	}()
 }
+
+func getDomain(dc chan string) {
+	for {
+		domain, err := getADomainToCheck()
+		if err != nil {
+			dc <- ""
+		}
+		dc <- domain
+	}
+}
+
+func checkDomain(dc chan string) {
+	for {
+		select {
+		case domain := <-dc:
+			registered := isDomainRegistered(domain)
+			updateDomainStatus(domain, registered)
+			time.Sleep(3 * 1e9)
+		}
+	}
+}
+
+func checkDomainRegister() {
+	dc := make(chan string)
+	go getDomain(dc)
+	go checkDomain(dc)
+}
