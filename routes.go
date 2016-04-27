@@ -82,7 +82,7 @@ func homeHanlder(w http.ResponseWriter, r *http.Request) {
 func renderWatcherEditOrAdd(w http.ResponseWriter, isAdd bool, page watcherPage) {
 	if isAdd {
 		page.SubmitURL = "/watch/new"
-		page.PageTitle = "Add new watch list"
+		page.PageTitle = "Create new watch list"
 		page.Button = "Create"
 	} else {
 		page.SubmitURL = "/watch/edit/" + page.WatcherID

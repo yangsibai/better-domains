@@ -2,7 +2,7 @@ node_modules/
 public/
 
 .DS_Store
-better-domain
+better-domains
 char4.txt
 char5.txt
 *.db

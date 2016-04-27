@@ -1,4 +1,5 @@
 @color-KOHBAI: #E16B8C;
+@color-IKKONZOME: #F4A7B9;
 @color-TSUYUKUSA: #2EA9DF;
 @color-RO: #0C0C0C;
 @color-KUROTSURUBAMI: #0B1013;
@@ -6,6 +7,8 @@
 @color-SUNEZUMI: #787D7B;
 @color-SHIRONERI: #FCFAF2;
 @color-GOFUN: #FFFFFB;
+@color-BENIKESHINEZUMI: #52433D;
+@color-KARAKURENAI: #D0104C;
 
 html, body {
     font-family: "Microsoft Yahei", Arial,"Helvetica Neue",Helvetica,"Lucida Grande","Lucida Sans Unicode","Lucida Sans",Geneva,Verdana,sans-serif;
@@ -33,16 +36,21 @@ nav {
 
 h1 {
     font-size: 24px;
-    margin: 1.4em 0;
+    margin: 1em 0 0;
+    color: @color-KOHBAI;
 }
 
 h3 {
     font-size: 16px;
     margin: 1em 0;
+    color: @color-SUNEZUMI;
 }
 
 .home {
-    ul {
+    .banner {
+        font-size: 14px;
+        margin: 0.5em 0;
+        color: @color-BENIKESHINEZUMI;
     }
 }
 
@@ -61,7 +69,8 @@ h3 {
 
 .watch {
     .error-message {
-        color: @color-KOHBAI;
+        color: @color-KARAKURENAI;
+        font-size: 14px;
     }
     &.edit {
         form {
@@ -69,11 +78,12 @@ h3 {
                 p {
                     margin: 5px 0;
                     padding: 0;
+                    font-size: 14px;
+                    color: @color-BENIKESHINEZUMI;
                 }
                 margin: 20px 0;
                 input {
                     line-height: 24px;
-                    width: 200px;
                 }
                 .address {
                     font-size: 14px;
@@ -89,6 +99,7 @@ h3 {
                     }
                 }
                 input, textarea {
+                    width: 300px;
                     outline: none;
                     border: 1px solid @color-TSUYUKUSA;
                     &:active {
