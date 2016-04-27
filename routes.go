@@ -72,8 +72,8 @@ func homeHanlder(w http.ResponseWriter, r *http.Request) {
 		Char4 []string
 		Char5 []string
 	}{
-		char4Domains,
-		char5Domains,
+		sortAndCleanDomains(char4Domains),
+		sortAndCleanDomains(char5Domains),
 	}
 	t, _ := template.ParseFiles("tmpls/index.tmpl")
 	t.Execute(w, data)
@@ -232,7 +232,7 @@ func filterByPattern(domains []string, pattern string) (results []string) {
 // match domains to keywords
 func matchKeywords(domains []string, patterns []string) (result []keywordDomains) {
 	for _, pattern := range patterns {
-		result = append(result, keywordDomains{pattern, filterByPattern(domains, pattern)})
+		result = append(result, keywordDomains{pattern, sortAndCleanDomains(filterByPattern(domains, pattern))})
 	}
 	return
 }
