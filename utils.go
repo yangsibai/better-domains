@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net"
 	"strings"
 )
@@ -40,6 +41,9 @@ func isDomainRegistered(domain string) bool {
 }
 
 func canDial(domain string) bool {
+	if len(domain) <= 4 {
+		log.Println("domain length is less than 4")
+	}
 	_, err := net.Dial("tcp", domain[4:]+":80")
 	if err != nil {
 		return false
