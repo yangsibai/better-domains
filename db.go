@@ -142,7 +142,9 @@ func getADomainToCheck() (domain string, err error) {
 	SELECT domain
 	FROM domain
 	WHERE update_time IS NULL OR update_time < DATE_ADD(now(), INTERVAL -1 HOUR)
-	LIMIT 1;`).Scan(&domain)
+	ORDER BY id DESC
+	LIMIT 1;
+	`).Scan(&domain)
 	return
 }
 
