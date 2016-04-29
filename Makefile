@@ -1,4 +1,10 @@
-run: 
-	go build && ./better-domains
+run: assets build
+	./domains
 
-.PHONY: run
+build:
+	go build -o domains
+
+assets:
+	gulp build
+
+.PHONY: run build assets

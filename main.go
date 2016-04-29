@@ -6,8 +6,8 @@ import (
 )
 
 func main() {
-	go fetchDomains()
-	//go checkDomainRegister()
+	fetchDomains()
+	checkDomainRegister()
 
 	fs := http.FileServer(http.Dir("public"))
 	http.Handle("/public/", http.StripPrefix("/public/", fs))
