@@ -17,3 +17,19 @@ func TestCanDial2(t *testing.T) {
 		t.Error("Expected true, got", result)
 	}
 }
+
+func TestWhoisQueryRegistered(t *testing.T) {
+	domain := "www.nobodyregisterthis.com"
+	result := whoisQueryRegistered(domain)
+	if result {
+		t.Error("Expected false, got", result)
+	}
+}
+
+func TestWhoisQueryRegistered2(t *testing.T) {
+	domain := "www.example.com"
+	result := whoisQueryRegistered(domain)
+	if !result {
+		t.Error("Expected false, got", result)
+	}
+}
