@@ -76,6 +76,7 @@ func getDomain(dc chan string) {
 		if err != nil {
 			dc <- ""
 		}
+		updateDomainStatus(domain, false)
 		dc <- domain
 	}
 }
