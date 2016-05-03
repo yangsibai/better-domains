@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net"
+	"os/exec"
 	"strings"
 )
 
@@ -37,7 +38,7 @@ func sortAndCleanDomains(domains []string) (results []string) {
 }
 
 func isDomainRegistered(domain string) bool {
-	return canDial(domain)
+	return canDial(domain) || whoisQueryRegistered(domain)
 }
 
 func canDial(domain string) bool {
@@ -49,4 +50,13 @@ func canDial(domain string) bool {
 		return false
 	}
 	return true
+}
+
+func whoisQueryRegistered(domain string) bool {
+	out, err := exec.Command("whois", domain).Output()
+	if err != nil {
+		log.Fatal(err)
+		return false
+	}
+	return strings.Index(string(out), "No Match for") != -1
 }
