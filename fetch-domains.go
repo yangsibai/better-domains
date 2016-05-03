@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"regexp"
 	"time"
@@ -85,6 +86,7 @@ func checkDomain(dc chan string) {
 		case domain := <-dc:
 			registered := isDomainRegistered(domain)
 			updateDomainStatus(domain, registered)
+			log.Printf("%s registered: %v", domain, registered)
 			time.Sleep(3 * 1e9)
 		}
 	}
