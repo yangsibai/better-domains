@@ -88,7 +88,7 @@ func checkDomain(dc chan string) {
 			registered := isDomainRegistered(domain)
 			updateDomainStatus(domain, registered)
 			log.Printf("%s registered: %v", domain, registered)
-			time.Sleep(3 * 1e9)
+			time.Sleep(1 * 1e9)
 		}
 	}
 }
