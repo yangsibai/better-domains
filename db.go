@@ -141,10 +141,10 @@ func getADomainToCheck() (domain string, err error) {
 	err = db.QueryRow(`
 	SELECT domain
 	FROM domain
-	WHERE update_time IS NULL OR update_time < DATE_ADD(now(), INTERVAL -1 HOUR)
+	WHERE status = ? AND (update_time IS NULL OR update_time < DATE_ADD(now(), INTERVAL -1 HOUR))
 	ORDER BY update_time ASC
 	LIMIT 1;
-	`).Scan(&domain)
+	`, domainStatusNew).Scan(&domain)
 	return
 }
 
