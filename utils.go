@@ -32,7 +32,9 @@ func contains(vs []string, t string) bool {
 
 func sortAndCleanDomains(domains []string) (results []string) {
 	for _, domain := range domains {
-		results = append(results, domain[4:strings.Index(domain, ".com")])
+		if len(domain) > 4 {
+			results = append(results, domain[4:strings.Index(domain, ".com")])
+		}
 	}
 	return
 }
