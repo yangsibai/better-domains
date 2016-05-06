@@ -220,9 +220,9 @@ func watcherHandler(w http.ResponseWriter, r *http.Request) {
 
 // filter domains by pattern
 func filterByPattern(domains []string, pattern string) (results []string) {
-	r := regexp.MustCompile("www\\.[^.]*" + strings.TrimSpace(pattern) + "[^.]*\\.com")
+	r := regexp.MustCompile(strings.TrimSpace(pattern))
 	for _, domain := range domains {
-		if r.MatchString(domain) {
+		if r.MatchString(pureDomainName(domain)) {
 			results = append(results, domain)
 		}
 	}

@@ -35,15 +35,15 @@ func contains(vs []string, t string) bool {
 	return index(vs, t) != -1
 }
 
+// sort and clean domains
 func sortAndCleanDomains(domains []string) (results []string) {
 	for _, domain := range domains {
-		if len(domain) > 4 && strings.Index(domain, ".com") > 4 {
-			results = append(results, domain[4:strings.Index(domain, ".com")])
-		}
+		results = append(results, pureDomainName(domain))
 	}
 	return
 }
 
+// detect is domain registered
 func isDomainRegistered(domain string) bool {
 	return canDial(domain) || whoisQueryRegistered(domain)
 }
@@ -52,13 +52,14 @@ func canDial(domain string) bool {
 	if len(domain) <= 4 {
 		log.Println("domain length is less than 4")
 	}
-	_, err := net.DialTimeout("tcp", domain[4:]+":80", dialTimeout)
+	_, err := net.DialTimeout("tcp", trimHeadOfDomain(domain)+":80", dialTimeout)
 	if err != nil {
 		return false
 	}
 	return true
 }
 
+// use whois query to detect is domain registered
 func whoisQueryRegistered(domain string) bool {
 	cmd := exec.Command("whois", domain)
 
@@ -86,4 +87,20 @@ func whoisQueryRegistered(domain string) bool {
 			return strings.Index(out.String(), "No match for") == -1
 		}
 	}
+}
+
+// trim `www.` of a domain
+func trimHeadOfDomain(domain string) string {
+	if len(domain) > 4 {
+		return domain[4:]
+	}
+	return domain
+}
+
+// get pure domain name, without `www.` and `.com`
+func pureDomainName(domain string) string {
+	if len(domain) > 4 && strings.Index(domain, ".com") > 4 {
+		return domain[4:strings.Index(domain, ".com")]
+	}
+	return domain
 }
