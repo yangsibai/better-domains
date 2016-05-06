@@ -1,11 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"log"
 	"net"
 	"os/exec"
 	"strings"
+	"time"
 )
+
+const dialTimeout time.Duration = 5 * time.Second
+const whoisQueryTimeout time.Duration = 10 * time.Second
 
 func index(vs []string, t string) int {
 	for i, v := range vs {
@@ -47,7 +52,7 @@ func canDial(domain string) bool {
 	if len(domain) <= 4 {
 		log.Println("domain length is less than 4")
 	}
-	_, err := net.Dial("tcp", domain[4:]+":80")
+	_, err := net.DialTimeout("tcp", domain[4:]+":80", dialTimeout)
 	if err != nil {
 		return false
 	}
@@ -55,10 +60,30 @@ func canDial(domain string) bool {
 }
 
 func whoisQueryRegistered(domain string) bool {
-	out, err := exec.Command("whois", domain).Output()
-	if err != nil {
-		log.Fatal(err)
+	cmd := exec.Command("whois", domain)
+
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Start()
+
+	done := make(chan error, 1)
+
+	go func() {
+		done <- cmd.Wait()
+	}()
+	select {
+	case <-time.After(whoisQueryTimeout):
+		if err := cmd.Process.Kill(); err != nil {
+			log.Printf("%s failed to kill process %v", domain, err)
+			return false
+		}
+		log.Printf("%s process killed as timeout reached", domain)
 		return false
+	case err := <-done:
+		if err != nil {
+			return false
+		} else {
+			return strings.Index(out.String(), "No match for") == -1
+		}
 	}
-	return strings.Index(string(out), "No Match for") != -1
 }
