@@ -1,0 +1,5 @@
+{
+    "port":"9024",
+    "whoisQueryTimeout": 10,
+    "dialTimeout": 4
+}

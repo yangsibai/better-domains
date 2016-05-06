@@ -9,8 +9,8 @@ import (
 	"time"
 )
 
-const dialTimeout time.Duration = 5 * time.Second
-const whoisQueryTimeout time.Duration = 10 * time.Second
+var dialTimeout time.Duration = time.Duration(config.DialTimeout) * time.Second
+var whoisQueryTimeout time.Duration = time.Duration(config.WhoisQueryTimeout) * time.Second
 
 func index(vs []string, t string) int {
 	for i, v := range vs {
