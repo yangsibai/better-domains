@@ -1,5 +1,10 @@
 {
     "port":"9024",
     "whoisQueryTimeout": 10,
-    "dialTimeout": 4
+    "dialTimeout": 4,
+    "redis": {
+        "addr": "localhost:6379",
+        "password": "",
+        "db": 0
+    }
 }

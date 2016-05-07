@@ -12,6 +12,11 @@ type Configration struct {
 	Port              string `json:"port"`
 	WhoisQueryTimeout int    `json:"whoisQueryTimeout"`
 	DialTimeout       int    `json:"dialTimeout"`
+	Redis             struct {
+		Addr     string `json:"addr"`
+		Password string `json:"password"`
+		DB       int64  `json:"db"`
+	}
 }
 
 var config Configration
