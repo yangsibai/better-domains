@@ -2,6 +2,7 @@ package main
 
 import (
 	"html/template"
+	"log"
 	"net/http"
 	"regexp"
 	"strings"
@@ -55,10 +56,16 @@ func handleError(w http.ResponseWriter, err error) {
 
 // handle home page
 func homeHanlder(w http.ResponseWriter, r *http.Request) {
-	domains, err := getAllAvailableDomains()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	domains, err := getAvailableDomainsCache()
+	log.Println(domains)
+	if err != nil || domains == nil {
+		log.Println("has no cached domains")
+		domains, err = getAllAvailableDomains()
+		setAvailableDomainsCache(domains)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 	char4Domains := filter(domains, func(domain string) bool {
 		return len(domain) == char4DomainLength

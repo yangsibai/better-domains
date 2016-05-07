@@ -10,7 +10,7 @@ const availableDomainsCacheKey string = "all_available_domains"
 const availableDomainsCacheExpireation time.Duration = 10 * time.Minute
 
 // set available domains cache
-func setAvailableDomains(domains []string) error {
+func setAvailableDomainsCache(domains []string) error {
 	client := redis.NewClient(&redis.Options{
 		Addr:     config.Redis.Addr,
 		Password: config.Redis.Password,
@@ -25,7 +25,7 @@ func setAvailableDomains(domains []string) error {
 }
 
 // get available domains cache
-func getAvailableDomains() (domains []string, err error) {
+func getAvailableDomainsCache() (domains []string, err error) {
 	client := redis.NewClient(&redis.Options{
 		Addr:     config.Redis.Addr,
 		Password: config.Redis.Password,

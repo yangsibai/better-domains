@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -22,8 +21,8 @@ type Configration struct {
 var config Configration
 
 func main() {
-	fetchDomains()
-	checkDomainRegister()
+	go fetchDomains()
+	go checkDomainRegister()
 
 	fs := http.FileServer(http.Dir("public"))
 	http.Handle("/public/", http.StripPrefix("/public/", fs))
@@ -31,7 +30,7 @@ func main() {
 	http.HandleFunc("/", homeHanlder)
 	http.HandleFunc("/watch/", watcherHandler)
 
-	fmt.Println("server is listening")
+	log.Println("server is listening at", config.Port)
 	http.ListenAndServe(":"+config.Port, nil)
 }
 
