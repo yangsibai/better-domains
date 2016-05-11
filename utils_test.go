@@ -34,3 +34,11 @@ func TestWhoisQueryRegistered2(t *testing.T) {
 		t.Error("Expected true, got", result)
 	}
 }
+
+func TestWhoisQueryRegistered3(t *testing.T) {
+	domain := "www.yofr.com"
+	result := whoisQueryRegistered(domain)
+	if !result {
+		t.Error("Expected true, got", false)
+	}
+}
