@@ -9,9 +9,6 @@ import (
 	"time"
 )
 
-var dialTimeout time.Duration = time.Duration(config.DialTimeout) * time.Second
-var whoisQueryTimeout time.Duration = time.Duration(config.WhoisQueryTimeout) * time.Second
-
 func index(vs []string, t string) int {
 	for i, v := range vs {
 		if v == t {
@@ -52,7 +49,7 @@ func canDial(domain string) bool {
 	if len(domain) <= 4 {
 		log.Println("domain length is less than 4")
 	}
-	_, err := net.DialTimeout("tcp", trimHeadOfDomain(domain)+":80", dialTimeout)
+	_, err := net.DialTimeout("tcp", trimHeadOfDomain(domain)+":80", time.Duration(config.DialTimeout)*time.Second)
 	if err != nil {
 		return false
 	}
@@ -61,7 +58,7 @@ func canDial(domain string) bool {
 
 // use whois query to detect is domain registered
 func whoisQueryRegistered(domain string) bool {
-	cmd := exec.Command("whois", domain)
+	cmd := exec.Command("sleep", "5")
 
 	var out bytes.Buffer
 	cmd.Stdout = &out
@@ -73,7 +70,7 @@ func whoisQueryRegistered(domain string) bool {
 		done <- cmd.Wait()
 	}()
 	select {
-	case <-time.After(whoisQueryTimeout):
+	case <-time.After(time.Duration(config.WhoisQueryTimeout) * time.Second):
 		if err := cmd.Process.Kill(); err != nil {
 			log.Printf("%s failed to kill process %v", domain, err)
 			return false
