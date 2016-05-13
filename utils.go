@@ -81,7 +81,7 @@ func whoisQueryRegistered(domain string) bool {
 		if err != nil {
 			return false
 		} else {
-			return strings.Index(out.String(), "No match for") == -1
+			return out.String() != "" && strings.Index(out.String(), "No match for") == -1
 		}
 	}
 }
