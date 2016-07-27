@@ -16,16 +16,18 @@
     <div>
         <div>
             {{ range .Domains }}
-                {{ if .Domains }}
                 <h3>{{ .Keyword }}</h3>
                 <div>
+                    {{ if .Domains }}
                     <ul class="domains">
                         {{ range .Domains }}
                             <li>{{ . }}</li>
                         {{ end }}
                     </ul>
+                    {{ else }}
+                    <p>No domain matches this.</p>
+                    {{ end }}
                 </div>
-                {{ end }}
             {{ end }}
         </div>
     </div>
